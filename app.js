@@ -1,5 +1,5 @@
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {getAuth,GoogleAuthProvider,signInWithPopup,signInWithRedirect,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {getFirestore,collection,doc,getDoc,getDocs,setDoc,addDoc,updateDoc,deleteDoc,onSnapshot,query,orderBy,limit,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {firebaseConfig} from "./firebase-config.js";
 
@@ -220,57 +220,4 @@ V.directory=()=>{
 async function act(b){
   const [a,c,i,f,v]=b.dataset.a.split("|"),val=b.tagName==="SELECT"?b.value:v;
   try{
-    if(a==="del"){if(confirm("Delete this item?"))await deleteDoc(doc(db,c,i))}
-    else if(a==="set")await updateDoc(doc(db,c,i),{[f]:val});
-    else if(a==="vote"){await setDoc(doc(db,"polls",c,"ballots",email),{choice:+i,email,at:serverTimestamp()});fill(D.polls.find(p=>p.id===c))}
-    else if(a==="approve"){const q=D.accessRequests.find(x=>x.id===c);
-      await setDoc(doc(db,"roster",c),{name:q.name||c,role:"member",status:"active",committee:"",gradYear:""});
-      await deleteDoc(doc(db,"accessRequests",c))}
-  }catch(x){toast(x.message)}
-}
-document.addEventListener("click",e=>{const b=e.target.closest("button[data-a]");if(b)act(b)});
-document.addEventListener("change",e=>{if(e.target.matches("select[data-a]"))act(e.target)});
-
-/* ---------- shell, routing, auth ---------- */
-const NAV=[["Core",[["dashboard","Dashboard","▦"],["announcements","Announcements","✦"],["chat","General Chat","✉"],["calendar","Calendar","▤"],["tasks","Tasks","✓"]]],
- ["Brotherhood",[["committees","Committees","⚑"],["prayers","Prayer Requests","✚"],["hours","Service Hours","♡"],["attendance","Attendance","☑"],["voting","Voting Center","⚖"],["recognition","Recognition Wall","★"],["directory","Member Directory","☰"]]]];
-
-function go(v){
-  if(!V[v])v="dashboard";
-  document.querySelectorAll("#nav a").forEach(a=>a.classList.toggle("on",a.dataset.v===v));
-  $("#nav").classList.remove("open");V[v]();window.scrollTo(0,0);
-}
-window.onhashchange=()=>me&&go(location.hash.slice(1));
-$("#burger").onclick=()=>$("#nav").classList.toggle("open");
-
-function shell(){
-  $("#nav").innerHTML=`<div class="brand"><span class="cross">✠</span><div><b>KHT Portal</b><i>${esc(me.role)}</i></div></div>`
-    +NAV.map(([g,it])=>`<h4>${g}</h4>`+it.map(([id,l,ic])=>`<a href="#${id}" data-v="${id}"><span>${ic}</span>${l}</a>`).join("")).join("")
-    +`<div class="who"><span class="av">${esc(me.name[0])}</span><div><b>${esc(me.name)}</b><small>${esc(email)}</small></div><button id="out" title="Sign out" aria-label="Sign out">⎋</button></div>`;
-  $("#out").onclick=()=>signOut(auth);
-}
-
-async function deny(u){
-  show("deny");
-  let pending=false;
-  try{pending=(await getDoc(doc(db,"accessRequests",email))).exists()}catch(x){}
-  $("#denybox").innerHTML=`<div class="cross">✠</div><h1>Access required</h1><p>${esc(email)} is not on the chapter roster.</p>`
-    +(pending?`<p><b>Your request is pending.</b> An administrator will approve it.</p>`:`<button class="btn wide" id="req">Request access</button>`)
-    +`<button class="ghost wide" id="so" style="margin-top:.6rem">Sign out</button>`;
-  $("#so").onclick=()=>signOut(auth);
-  if(!pending)$("#req").onclick=async()=>{try{await setDoc(doc(db,"accessRequests",email),{name:u.displayName||email,at:serverTimestamp()});deny(u)}catch(x){toast(x.message)}};
-}
-
-$("#gsign").onclick=()=>signInWithPopup(auth,new GoogleAuthProvider()).catch(e=>toast(e.message));
-if(firebaseConfig.apiKey.startsWith("PASTE"))toast("Add your Firebase settings to firebase-config.js first.");
-
-onAuthStateChanged(auth,async u=>{
-  unsubs.forEach(x=>x());G.forEach(x=>x());unsubs=[];G=[];D={};me=null;
-  if(!u)return show("login");
-  email=u.email.toLowerCase();
-  let r;try{r=await getDoc(doc(db,"roster",email))}catch(e){toast(e.message);return deny(u)}
-  if(!r.exists()||r.data().status!=="active")return deny(u);
-  me={...r.data(),name:r.data().name||u.displayName||email};
-  G.push(onSnapshot(collection(db,"committees"),s=>{D.committees=s.docs.map(d=>({id:d.id,...d.data()}))}));
-  shell();show("app");go(location.hash.slice(1));
-});
+    
