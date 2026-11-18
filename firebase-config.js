@@ -5,4 +5,3 @@ export const firebaseConfig = {
   projectId: "templar-portal-database",
   appId: "1:20032048574:web:7ae106aa84d298c837fdef"
 };
-:2
