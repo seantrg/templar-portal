@@ -1,0 +1,68 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{db}/documents {
+    function em() { return request.auth.token.email.lower(); }
+    function row() { return get(/databases/$(db)/documents/roster/$(em())).data; }
+    function member() {
+      return request.auth != null && request.auth.token.email_verified == true
+        && exists(/databases/$(db)/documents/roster/$(em())) && row().status == 'active';
+    }
+    function officer() { return member() && row().role in ['officer', 'admin']; }
+    function admin() { return member() && row().role == 'admin'; }
+    function mine() { return request.resource.data.by == em(); }
+
+    match /roster/{e} {
+      allow get: if (request.auth != null && em() == e) || member();
+      allow list: if member();
+      allow write: if admin();
+    }
+    match /accessRequests/{e} {
+      allow create: if request.auth != null && request.auth.token.email_verified == true && em() == e;
+      allow get: if (request.auth != null && em() == e) || officer();
+      allow list: if officer();
+      allow delete: if admin();
+    }
+    match /announcements/{i} { allow read: if member(); allow write: if officer(); }
+    match /events/{i}        { allow read: if member(); allow write: if officer(); }
+    match /committees/{i}    { allow read: if member(); allow write: if officer(); }
+    match /recognition/{i}   { allow read: if member(); allow write: if officer(); }
+    match /polls/{i} {
+      allow read: if member();
+      allow write: if officer();
+      match /ballots/{b} {
+        allow read: if officer() || (member() && b == em());
+        allow create: if member() && b == em() && request.resource.data.email == em()
+          && get(/databases/$(db)/documents/polls/$(i)).data.status == 'Open';
+      }
+    }
+    match /chat/{i} {
+      allow read: if member();
+      allow create: if member() && mine() && request.resource.data.text is string
+        && request.resource.data.text.size() <= 1000;
+      allow delete: if officer() || (member() && resource.data.by == em());
+    }
+    match /prayers/{i} {
+      allow read: if member();
+      allow create: if member() && mine();
+      allow delete: if officer() || (member() && resource.data.by == em());
+    }
+    match /tasks/{i} {
+      allow read: if member();
+      allow create, delete: if officer();
+      allow update: if officer() || (member() && resource.data.assignee == em()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']));
+    }
+    match /hours/{i} {
+      allow read: if member();
+      allow create: if member() && mine() && request.resource.data.email == em()
+        && request.resource.data.status == 'Pending';
+      allow update, delete: if officer();
+    }
+    match /attendance/{i} {
+      allow read: if member();
+      allow create: if member() && request.resource.data.email == em()
+        && i == request.resource.data.eventId + '_' + em();
+      allow update, delete: if officer();
+    }
+  }
+}
