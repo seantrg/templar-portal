@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Knights of the Holy Temple | Brotherhood Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+SC:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=4">
+</head>
+<body>
+<section id="login" class="screen" hidden>
+  <div class="box">
+    <img src="logo.png" alt="Templars" class="logo" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'logo cross',textContent:'✠'}))">
+    <h1>Knights of the Holy Temple</h1>
+    <p>Portal Authentication</p>
+    <button class="btn wide" id="gsign">Sign in with Google</button>
+    <hr>
+    <p class="sm">Not a member yet? Sign in with Google, then choose <b>Request access</b>.</p>
+  </div>
+</section>
+<section id="deny" class="screen" hidden>
+  <div class="box" id="denybox"></div>
+</section>
+<div id="app" hidden>
+  <aside id="nav"></aside>
+  <div id="content">
+    <div id="bar"><button id="burger" aria-label="Menu">☰</button><span>KHT Portal</span></div>
+    <main id="main"></main>
+  </div>
+</div>
+<dialog id="dlg"></dialog>
+<div id="toast" hidden></div>
+<script>
+(function(){
+function say(m){var d=document.getElementById('diag');if(!d){d=document.createElement('div');d.id='diag';d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99;background:#fff3cd;color:#222;padding:10px;font:14px/1.4 sans-serif;border-bottom:2px solid #c90';document.body.appendChild(d)}d.textContent=m}
+window.addEventListener('error',function(e){say('Error: '+e.message)});
+window.addEventListener('unhandledrejection',function(e){say('Error: '+((e.reason&&e.reason.message)||e.reason))});
+setTimeout(function(){
+ if(window.__kht)return;
+ fetch('firebase-config.js?'+Date.now()).then(function(r){
+  if(!r.ok)return say('firebase-config.js is missing from your repo (HTTP '+r.status+'). Upload it next to index.html.');
+  return r.text().then(function(t){
+   if(/PASTE/.test(t))say('firebase-config.js still has the PASTE placeholders.');
+   else if(!/export\s+const\s+firebaseConfig/.test(t))say('firebase-config.js must start with: export const firebaseConfig = { ... }. Re-copy it from the zip and change only the values.');
+   else if(/^\s*import\s/m.test(t))say('firebase-config.js contains an "import" line (copied from the Firebase snippet). Delete every line except the export const firebaseConfig = { ... }; block.');
+   else fetch('app.js?'+Date.now()).then(function(r2){if(!r2.ok)return say('app.js is missing from your repo (HTTP '+r2.status+'). Upload it next to index.html.');return r2.text().then(function(s){if(s.indexOf('__kht')<0)return say('app.js in your repo is the OLD version. Upload the new app.js from the latest zip (replace it), then refresh.');import('./app.js?v=4').catch(function(e){say('app.js failed to run: '+e.message+' | app.js length '+s.length+' (should be 26721), ends with: '+JSON.stringify(s.slice(-30)))})})});
+  })}).catch(function(){say('Could not check the files.')});
+},2500);
+})();
+</script>
+<script type="module" src="app.js?v=4"></script>
+</body>
+</html>
