@@ -1,5 +1,6 @@
 :root{--red:#8f1d27;--ink:#1a1a1c;--bg:#f4f4f5;--line:#e4e4e7;--mut:#5b5b63}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body{margin:0;font:15px/1.5 Inter,system-ui,sans-serif;background:var(--bg);color:#222}
 h1,h2,h3,h4{margin:0}
 h1,h2{font-family:"Cormorant SC",serif;font-weight:700;color:var(--red);letter-spacing:.02em}
