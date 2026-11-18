@@ -44,7 +44,8 @@ setTimeout(function(){
   return r.text().then(function(t){
    if(/PASTE/.test(t))say('firebase-config.js still has the PASTE placeholders.');
    else if(!/export\s+const\s+firebaseConfig/.test(t))say('firebase-config.js must start with: export const firebaseConfig = { ... }. Re-copy it from the zip and change only the values.');
-   else say('The app script did not start. Make sure app.js is in the same folder as index.html, then refresh.');
+   else if(/^\s*import\s/m.test(t))say('firebase-config.js contains an "import" line (copied from the Firebase snippet). Delete every line except the export const firebaseConfig = { ... }; block.');
+   else fetch('app.js?'+Date.now()).then(function(r2){if(!r2.ok)return say('app.js is missing from your repo (HTTP '+r2.status+'). Upload it next to index.html.');return r2.text().then(function(s){if(s.indexOf('__kht')<0)return say('app.js in your repo is the OLD version. Upload the new app.js from the latest zip (replace it), then refresh.');import('./app.js?v=3').catch(function(e){say('app.js failed to run: '+e.message)})})});
   })}).catch(function(){say('Could not check the files.')});
 },2500);
 })();
