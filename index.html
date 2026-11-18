@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+SC:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=3">
+<link rel="stylesheet" href="styles.css?v=4">
 </head>
 <body>
 <section id="login" class="screen" hidden>
@@ -45,11 +45,11 @@ setTimeout(function(){
    if(/PASTE/.test(t))say('firebase-config.js still has the PASTE placeholders.');
    else if(!/export\s+const\s+firebaseConfig/.test(t))say('firebase-config.js must start with: export const firebaseConfig = { ... }. Re-copy it from the zip and change only the values.');
    else if(/^\s*import\s/m.test(t))say('firebase-config.js contains an "import" line (copied from the Firebase snippet). Delete every line except the export const firebaseConfig = { ... }; block.');
-   else fetch('app.js?'+Date.now()).then(function(r2){if(!r2.ok)return say('app.js is missing from your repo (HTTP '+r2.status+'). Upload it next to index.html.');return r2.text().then(function(s){if(s.indexOf('__kht')<0)return say('app.js in your repo is the OLD version. Upload the new app.js from the latest zip (replace it), then refresh.');import('./app.js?v=3').catch(function(e){say('app.js failed to run: '+e.message+' | app.js length '+s.length+' (should be 24135), ends with: '+JSON.stringify(s.slice(-30)))})})});
+   else fetch('app.js?'+Date.now()).then(function(r2){if(!r2.ok)return say('app.js is missing from your repo (HTTP '+r2.status+'). Upload it next to index.html.');return r2.text().then(function(s){if(s.indexOf('__kht')<0)return say('app.js in your repo is the OLD version. Upload the new app.js from the latest zip (replace it), then refresh.');import('./app.js?v=4').catch(function(e){say('app.js failed to run: '+e.message+' | app.js length '+s.length+' (should be 26721), ends with: '+JSON.stringify(s.slice(-30)))})})});
   })}).catch(function(){say('Could not check the files.')});
 },2500);
 })();
 </script>
-<script type="module" src="app.js?v=3"></script>
+<script type="module" src="app.js?v=4"></script>
 </body>
 </html>

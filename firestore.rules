@@ -15,6 +15,10 @@ service cloud.firestore {
       allow get: if (request.auth != null && em() == e) || member();
       allow list: if member();
       allow write: if admin();
+      allow update: if member() && em() == e
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'phone', 'photo', 'notify'])
+        && (!('photo' in request.resource.data) || request.resource.data.photo.size() < 60000)
+        && (!('phone' in request.resource.data) || request.resource.data.phone.size() <= 30);
     }
     match /accessRequests/{e} {
       allow create: if request.auth != null && request.auth.token.email_verified == true && em() == e;

@@ -35,7 +35,7 @@ function form(title,fields,save){
   d.innerHTML=`<form method="dialog"><h3>${title}</h3>${fields.map(f=>`<label>${f.l}${
     f.o?`<select name="${f.k}">${opts(f.o)}</select>`
     :f.t==="area"?`<textarea name="${f.k}" required></textarea>`
-    :`<input name="${f.k}" type="${f.t||"text"}"${f.t==="number"?' step="0.25" min="0"':""}${f.r===false?"":" required"}>`}</label>`).join("")}
+    :`<input name="${f.k}" type="${f.t||"text"}"${f.t==="number"?' step="0.25" min="0"':""}${f.v!==undefined?` value="${esc(f.v)}"`:""}${f.r===false?"":" required"}>`}</label>`).join("")}
     <div class="row"><button value="x" formnovalidate class="ghost">Cancel</button><button value="ok" class="btn">Save</button></div></form>`;
   d.querySelector("form").onsubmit=async e=>{
     if(e.submitter.value!=="ok")return;
@@ -209,12 +209,34 @@ V.directory=()=>{
   const paint=()=>{const q=$("#q").value.toLowerCase(),c=$("#cf").value,r=$("#rf").value,g=$("#gy").value.trim(),s=$("#sf").value;
     $("#l").innerHTML=D.roster.filter(m=>(m.name||"").toLowerCase().includes(q)&&(!c||m.committee===c)&&(!r||m.role===r)&&(!g||String(m.gradYear)===g)&&m.status===s)
       .sort((a,b)=>(a.name||"")>(b.name||"")?1:-1)
-      .map(m=>card(`<div class="split"><div><h3>${esc(m.name)}</h3><small>${esc(m.id)}${m.committee?" • "+esc(m.committee):""}${m.gradYear?" • Class of "+esc(m.gradYear):""}</small></div><span class="pill">${esc(m.role)}</span></div>`)).join("")||empty("No members match.");
+      .map(m=>card(`<div class="split"><div><h3>${esc(m.name)}</h3><small>${esc(m.id)}${m.committee?" • "+esc(m.committee):""}${m.phone?" • "+esc(m.phone):""}${m.gradYear?" • Class of "+esc(m.gradYear):""}</small></div><span class="pill">${esc(m.role)}</span></div>`)).join("")||empty("No members match.");
     if(adm())$("#rq").innerHTML=(D.accessRequests||[]).length?`<h2>Access requests</h2>`+D.accessRequests.map(q=>card(`<div class="split"><div><h3>${esc(q.name)}</h3><small>${esc(q.id)}</small></div>${btn(`approve|${q.id}|`,"Approve","btn sm-btn")}${btn(`del|accessRequests|${q.id}`,"Deny")}</div>`)).join(""):""};
   ["#q","#gy"].forEach(s=>$(s).oninput=paint);["#cf","#rf","#sf"].forEach(s=>$(s).onchange=paint);
   if(adm())$("#new").onclick=()=>form("Add or update member",[{k:"email",l:"Google email",t:"email"},{k:"name",l:"Name"},{k:"role",l:"Role",o:["member","officer","admin"]},{k:"committee",l:"Committee",o:["",...cnames()]},{k:"gradYear",l:"Grad year",r:false},{k:"status",l:"Status",o:["active","inactive"]}],
     o=>setDoc(doc(db,"roster",o.email.toLowerCase()),{name:o.name,role:o.role,committee:o.committee,gradYear:o.gradYear,status:o.status}));
   need(adm()?["roster","accessRequests"]:["roster"],paint);
+};
+
+/* ---------- profile ---------- */
+const avatar=(big="")=>me.photo?`<img class="av ${big}" src="${esc(me.photo)}" alt="">`:`<span class="av ${big}">${esc(me.name[0])}</span>`;
+function resize(file,px=160){
+  return new Promise((res,rej)=>{
+    const img=new Image(),u=URL.createObjectURL(file);
+    img.onload=()=>{const side=Math.min(img.width,img.height),c=document.createElement("canvas");
+      c.width=c.height=px;c.getContext("2d").drawImage(img,(img.width-side)/2,(img.height-side)/2,side,side,0,0,px,px);
+      URL.revokeObjectURL(u);res(c.toDataURL("image/jpeg",.8))};
+    img.onerror=()=>rej(new Error("Could not read that image."));img.src=u})}
+V.profile=()=>{
+  main.innerHTML=head("Member Profile","Personal record, committee memberships, and notification settings.",`<button class="ghost" id="ed">✎ Edit Profile</button>`)
+    +`<div class="prof"><div class="card pc">${avatar("big")}<h2>${esc(me.name)}</h2><span class="pill">${esc(me.role)}</span><p>${esc(email)}</p><p>${me.phone?esc(me.phone):"No phone listed"}</p><button class="ghost" id="up">📷 Upload Photo</button><input type="file" id="ph" accept="image/*" hidden></div>`
+    +`<div class="card"><h2>Brotherhood Metrics &amp; Committees</h2><div class="stk" id="st"></div><h3>Assigned Committees:</h3><p>${me.committee?`<span class="pill">${esc(me.committee)}</span>`:"None"}</p><h3>Notification Preferences:</h3><label class="chk"><input type="checkbox" id="nt"${me.notify!==false?" checked":""}> Receive Email Notifications for Announcements &amp; Events</label></div></div>`;
+  const save=async p=>{await updateDoc(doc(db,"roster",email),p);Object.assign(me,p);shell();V.profile()};
+  $("#ed").onclick=()=>form("Edit profile",[{k:"name",l:"Name",v:me.name},{k:"phone",l:"Phone number",t:"tel",r:false,v:me.phone||""}],o=>save({name:o.name.trim(),phone:o.phone.trim()}));
+  $("#up").onclick=()=>$("#ph").click();
+  $("#ph").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{await save({photo:await resize(f)})}catch(x){toast(x.message)}};
+  $("#nt").onchange=async e=>{const v=e.target.checked;try{await updateDoc(doc(db,"roster",email),{notify:v});me.notify=v}catch(x){toast(x.message);e.target.checked=!v}};
+  need(["attendance","events","hours","tasks"],()=>{
+    $("#st").innerHTML=stat("Attendance",rate([email])+"%")+stat("Service Hours",sum(D.hours.filter(h=>h.email===email&&h.status==="Approved")).toFixed(1))+stat("Tasks Completed",D.tasks.filter(t=>t.assignee===email&&t.status==="Completed").length)});
 };
 
 /* ---------- actions (delegated) ---------- */
@@ -247,7 +269,7 @@ $("#burger").onclick=()=>$("#nav").classList.toggle("open");
 function shell(){
   $("#nav").innerHTML=`<div class="brand"><span class="cross">✠</span><div><b>KHT Portal</b><i>${esc(me.role)}</i></div></div>`
     +NAV.map(([g,it])=>`<h4>${g}</h4>`+it.map(([id,l,ic])=>`<a href="#${id}" data-v="${id}"><span>${ic}</span>${l}</a>`).join("")).join("")
-    +`<div class="who"><span class="av">${esc(me.name[0])}</span><div><b>${esc(me.name)}</b><small>${esc(email)}</small></div><button id="out" title="Sign out" aria-label="Sign out">⎋</button></div>`;
+    +`<div class="who"><a href="#profile" class="pl">${avatar()}<div><b>${esc(me.name)}</b><small>${esc(email)}</small></div></a><button id="out" title="Sign out" aria-label="Sign out">⎋</button></div>`;
   $("#out").onclick=()=>signOut(auth);
 }
 
