@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+SC:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=3">
 </head>
 <body>
 <section id="login" class="screen" hidden>
@@ -32,6 +32,23 @@
 </div>
 <dialog id="dlg"></dialog>
 <div id="toast" hidden></div>
-<script type="module" src="app.js"></script>
+<script>
+(function(){
+function say(m){var d=document.getElementById('diag');if(!d){d=document.createElement('div');d.id='diag';d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99;background:#fff3cd;color:#222;padding:10px;font:14px/1.4 sans-serif;border-bottom:2px solid #c90';document.body.appendChild(d)}d.textContent=m}
+window.addEventListener('error',function(e){say('Error: '+e.message)});
+window.addEventListener('unhandledrejection',function(e){say('Error: '+((e.reason&&e.reason.message)||e.reason))});
+setTimeout(function(){
+ if(window.__kht)return;
+ fetch('firebase-config.js?'+Date.now()).then(function(r){
+  if(!r.ok)return say('firebase-config.js is missing from your repo (HTTP '+r.status+'). Upload it next to index.html.');
+  return r.text().then(function(t){
+   if(/PASTE/.test(t))say('firebase-config.js still has the PASTE placeholders.');
+   else if(!/export\s+const\s+firebaseConfig/.test(t))say('firebase-config.js must start with: export const firebaseConfig = { ... }. Re-copy it from the zip and change only the values.');
+   else say('The app script did not start. Make sure app.js is in the same folder as index.html, then refresh.');
+  })}).catch(function(){say('Could not check the files.')});
+},2500);
+})();
+</script>
+<script type="module" src="app.js?v=3"></script>
 </body>
 </html>
