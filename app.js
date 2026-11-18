@@ -2,6 +2,7 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase
 import {getAuth,GoogleAuthProvider,signInWithPopup,signInWithRedirect,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {getFirestore,collection,doc,getDoc,getDocs,setDoc,addDoc,updateDoc,deleteDoc,onSnapshot,query,orderBy,limit,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {firebaseConfig} from "./firebase-config.js";
+import {enablePush,disablePush,pushSupported,pushOn,refreshPush,detach,listen} from "./push.js";
 
 window.__kht=1;
 const auth=getAuth(initializeApp(firebaseConfig)),db=getFirestore(auth.app);
@@ -229,12 +230,14 @@ function resize(file,px=160){
 V.profile=()=>{
   main.innerHTML=head("Member Profile","Personal record, committee memberships, and notification settings.",`<button class="ghost" id="ed">✎ Edit Profile</button>`)
     +`<div class="prof"><div class="card pc">${avatar("big")}<h2>${esc(me.name)}</h2><span class="pill">${esc(me.role)}</span><p>${esc(email)}</p><p>${me.phone?esc(me.phone):"No phone listed"}</p><button class="ghost" id="up">📷 Upload Photo</button><input type="file" id="ph" accept="image/*" hidden></div>`
-    +`<div class="card"><h2>Brotherhood Metrics &amp; Committees</h2><div class="stk" id="st"></div><h3>Assigned Committees:</h3><p>${me.committee?`<span class="pill">${esc(me.committee)}</span>`:"None"}</p><h3>Notification Preferences:</h3><label class="chk"><input type="checkbox" id="nt"${me.notify!==false?" checked":""}> Receive Email Notifications for Announcements &amp; Events</label></div></div>`;
+    +`<div class="card"><h2>Brotherhood Metrics &amp; Committees</h2><div class="stk" id="st"></div><h3>Assigned Committees:</h3><p>${me.committee?`<span class="pill">${esc(me.committee)}</span>`:"None"}</p><h3>Notification Preferences:</h3><label class="chk"><input type="checkbox" id="nt"${me.notify!==false?" checked":""}> Receive Email Notifications for Announcements &amp; Events</label><label class="chk"><input type="checkbox" id="pn"${pushOn()?" checked":""}> Push notifications on this device</label><small id="pnh"></small></div></div>`;
   const save=async p=>{await updateDoc(doc(db,"roster",email),p);Object.assign(me,p);shell();V.profile()};
   $("#ed").onclick=()=>form("Edit profile",[{k:"name",l:"Name",v:me.name},{k:"phone",l:"Phone number",t:"tel",r:false,v:me.phone||""}],o=>save({name:o.name.trim(),phone:o.phone.trim()}));
   $("#up").onclick=()=>$("#ph").click();
   $("#ph").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{await save({photo:await resize(f)})}catch(x){toast(x.message)}};
   $("#nt").onchange=async e=>{const v=e.target.checked;try{await updateDoc(doc(db,"roster",email),{notify:v});me.notify=v}catch(x){toast(x.message);e.target.checked=!v}};
+  $("#pn").onchange=async e=>{const on=e.target.checked;try{on?await enablePush(auth.app,db,email):await disablePush(auth.app,db)}catch(x){toast(x.message);e.target.checked=!on}};
+  pushSupported().then(ok=>{if(!ok){$("#pn").disabled=true;$("#pnh").textContent="Not supported here. On iPhone: Share > Add to Home Screen, then open the portal from that icon."}});
   need(["attendance","events","hours","tasks"],()=>{
     $("#st").innerHTML=stat("Attendance",rate([email])+"%")+stat("Service Hours",sum(D.hours.filter(h=>h.email===email&&h.status==="Approved")).toFixed(1))+stat("Tasks Completed",D.tasks.filter(t=>t.assignee===email&&t.status==="Completed").length)});
 };
@@ -270,7 +273,7 @@ function shell(){
   $("#nav").innerHTML=`<div class="brand"><span class="cross">✠</span><div><b>KHT Portal</b><i>${esc(me.role)}</i></div></div>`
     +NAV.map(([g,it])=>`<h4>${g}</h4>`+it.map(([id,l,ic])=>`<a href="#${id}" data-v="${id}"><span>${ic}</span>${l}</a>`).join("")).join("")
     +`<div class="who"><a href="#profile" class="pl">${avatar()}<div><b>${esc(me.name)}</b><small>${esc(email)}</small></div></a><button id="out" title="Sign out" aria-label="Sign out">⎋</button></div>`;
-  $("#out").onclick=()=>signOut(auth);
+  $("#out").onclick=async()=>{await detach(db);signOut(auth)};
 }
 
 async function deny(u){
@@ -305,5 +308,5 @@ onAuthStateChanged(auth,async u=>{
   if(!r.exists()||r.data().status!=="active")return deny(u);
   me={...r.data(),name:r.data().name||u.displayName||email};
   G.push(onSnapshot(collection(db,"committees"),s=>{D.committees=s.docs.map(d=>({id:d.id,...d.data()}))}));
-  shell();show("app");go(location.hash.slice(1));
+  shell();show("app");go(location.hash.slice(1));refreshPush(auth.app,db,email);listen(auth.app,toast);
 });

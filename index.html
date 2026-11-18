@@ -7,7 +7,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+SC:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=4">
+<link rel="stylesheet" href="styles.css?v=5">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#8f1d27">
+<link rel="apple-touch-icon" href="logo.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
 </head>
 <body>
 <section id="login" class="screen" hidden>
@@ -42,14 +46,15 @@ setTimeout(function(){
  fetch('firebase-config.js?'+Date.now()).then(function(r){
   if(!r.ok)return say('firebase-config.js is missing from your repo (HTTP '+r.status+'). Upload it next to index.html.');
   return r.text().then(function(t){
-   if(/PASTE/.test(t))say('firebase-config.js still has the PASTE placeholders.');
+   if(/apiKey:\s*"PASTE/.test(t))say('firebase-config.js still has the PASTE placeholders.');
    else if(!/export\s+const\s+firebaseConfig/.test(t))say('firebase-config.js must start with: export const firebaseConfig = { ... }. Re-copy it from the zip and change only the values.');
    else if(/^\s*import\s/m.test(t))say('firebase-config.js contains an "import" line (copied from the Firebase snippet). Delete every line except the export const firebaseConfig = { ... }; block.');
-   else fetch('app.js?'+Date.now()).then(function(r2){if(!r2.ok)return say('app.js is missing from your repo (HTTP '+r2.status+'). Upload it next to index.html.');return r2.text().then(function(s){if(s.indexOf('__kht')<0)return say('app.js in your repo is the OLD version. Upload the new app.js from the latest zip (replace it), then refresh.');import('./app.js?v=4').catch(function(e){say('app.js failed to run: '+e.message+' | app.js length '+s.length+' (should be 26721), ends with: '+JSON.stringify(s.slice(-30)))})})});
+   else fetch('push.js?'+Date.now()).then(function(p){if(!p.ok)return say('push.js is missing from your repo (HTTP '+p.status+'). Upload it next to index.html.');
+    return fetch('app.js?'+Date.now()).then(function(r2){if(!r2.ok)return say('app.js is missing from your repo (HTTP '+r2.status+'). Upload it next to index.html.');return r2.text().then(function(s){if(s.indexOf('__kht')<0)return say('app.js in your repo is the OLD version. Upload the new app.js from the latest zip (replace it), then refresh.');import('./app.js?v=5').catch(function(e){say('app.js failed to run: '+e.message)})})})});
   })}).catch(function(){say('Could not check the files.')});
 },2500);
 })();
 </script>
-<script type="module" src="app.js?v=4"></script>
+<script type="module" src="app.js?v=5"></script>
 </body>
 </html>
