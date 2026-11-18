@@ -3,6 +3,7 @@ import {getAuth,GoogleAuthProvider,signInWithPopup,signInWithRedirect,onAuthStat
 import {getFirestore,collection,doc,getDoc,getDocs,setDoc,addDoc,updateDoc,deleteDoc,onSnapshot,query,orderBy,limit,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {firebaseConfig} from "./firebase-config.js";
 
+window.__kht=1;
 const auth=getAuth(initializeApp(firebaseConfig)),db=getFirestore(auth.app);
 const $=s=>document.querySelector(s),main=$("#main");
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -218,6 +219,4 @@ V.directory=()=>{
 
 /* ---------- actions (delegated) ---------- */
 async function act(b){
-  const [a,c,i,f,v]=b.dataset.a.split("|"),val=b.tagName==="SELECT"?b.value:v;
-  try{
-    
+  const [a,c,i,f,v]=b.dataset.a.split("|"),val=b.tagName==="SELECT"?b.
